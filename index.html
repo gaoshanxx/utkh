@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>東大国語研究会　駿阪南校内校</title>
+  <style>
+    body {
+      background: 
+        url('bg.jpeg') no-repeat center center / cover;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 6px 32px rgba(50,50,93,.1), 0 1.5px 6px rgba(0,0,0,.07);
+      padding: 2.5em 2em;
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 {
+      color: #2d4a6e;
+      font-size: 2em;
+      margin-bottom: 1em;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    #gpsNotice {
+      color: black;
+      font-size: 0.5em;
+      font-weight: 600;
+      margin-bottom: 1em;
+    }
+    #checkBtn {
+      background: linear-gradient(90deg, #6ec1e4, #8878c3);
+      color: white;
+      border: none;
+      outline: none;
+      font-size: 1.2em;
+      padding: 0.75em 2em;
+      border-radius: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.11);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      margin-top: .5em;
+    }
+    #checkBtn:hover, #checkBtn:focus {
+      background: linear-gradient(90deg, #8878c3, #6ec1e4);
+      transform: translateY(-2px) scale(1.05);
+    }
+    #message {
+      font-size: 1.4em;
+      color: #007944;
+      margin-top: 1.5em;
+      font-weight: 600;
+    }
+    #error {
+      color: #b30000;
+      margin-top: 1.2em;
+      font-size: 1em;
+      font-weight: 500;
+    }
+    .logo-box {
+      display: inline-block;
+      background-color: #e60012; /* Japanese vivid red */
+      padding: 0.5em 1em;
+      border-radius: 0px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .logo-box h1 {
+      color: #fff;
+      font-family: 'Segoe UI', 'Hiragino Kaku Gothic Pro', 'Meiryo', Arial, sans-serif;
+      font-size: 1.8em;
+      font-weight: 900;
+      margin: 0;
+      letter-spacing: 0.08em;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-box">
+      <h1>東大国語研究会駿阪南校内校</h1>
+    </div>
+    <button id="checkBtn">駿阪南校内にいるので入室します（現在地を確認する）</button>
+    <div id="message"></div>
+    <div id="error"></div>
+    <div id="gpsNotice">ご利用の前に、GPS（位置情報設定）をオンにしてください。</div>
+  </div>
+  <script>
+    // 駿阪南校内前の座標
+    const TOKYO_STATION = { lat: 34.670397, lng: 135.4906081 };,
+    // 半径（メートル）
+    const RADIUS_METERS = 600;
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const toRad = x => x * Math.PI / 180;
+      const R = 6371000; // 地球の半径（メートル）
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    document.getElementById('checkBtn').onclick = function() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('error').textContent = '';
+      if (!navigator.geolocation) {
+        document.getElementById('error').textContent = 'お使いのブラウザは位置情報取得に対応していません。';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          const { latitude, longitude } = pos.coords;
+          const dist = haversineDistance(latitude, longitude, TOKYO_STATION.lat, TOKYO_STATION.lng);
+          if (dist <= RADIUS_METERS) {
+            document.getElementById('message').innerHTML = 'あなたは今駿阪南校内にいますね。ようこそ、東大国語研究会駿阪南校内校へ。限定テキストを購入できます。<a href="https://forms.gle/nFEWn12jjFkrmJ4o6">東大現代文２０２５四予備校採点</a>';
+            document.getElementById('gpsNotice').style.display = 'none'; // Hide when accepted
+          } else {
+            document.getElementById('message').textContent = '';
+            document.getElementById('error').textContent = '申し訳ありませんが、駿阪南校内ではありません。';
+            document.getElementById('gpsNotice').style.display = ''; // Show when not accepted
+          }
+        },
+        function(err) {
+          document.getElementById('error').textContent = '現在地情報を取得できませんでした。' +
+            (err.message || '');
+        }
+      );
+    };
+  </script>
+</body>
+</html>
